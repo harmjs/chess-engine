@@ -1,17 +1,26 @@
 import { XCoord, YCoord, Coord, Type, KING_ROW_TYPES, ARR_8, 
-    X_COORD_NAMES, Y_COORD_NAMES, Active, SanType } from "./constants.js";
+    X_COORD_NAMES, Y_COORD_NAMES, Active, SanType, Captured, Moved } from "./constants.js";
+import { piecesToStr } from "./utility.js";
+import { debugCoord, debugPiece, debugMove } from './debug.js';
 
-export const isOnBoard = (coord) =>
+
+export const isXOnBoard = (piece) =>
 {
-    const xRange = coord & XCoord.RANGE_ON;
+    const xRange = piece & XCoord.RANGE_ON;
 
-    if (xRange === 0 || xRange === XCoord.RANGE_ON) return false;
-    
-    const yRange = coord & YCoord.RANGE_ON;
+    return !(xRange === 0 || xRange === XCoord.RANGE_ON);
+}
 
-    if (yRange === 0 || yRange === YCoord.RANGE_ON) return false;
+export const isYOnBoard = (piece) =>
+{
+    const yRange = piece & YCoord.RANGE_ON;
 
-    return true;
+    return !(yRange === 0 || yRange === YCoord.RANGE_ON);
+}
+
+export const isOnBoard = (piece) =>
+{
+    return isXOnBoard(piece) && isYOnBoard(piece);
 }
 
 export const coordNameToCoordBits = (coordName) => 
@@ -37,97 +46,6 @@ export const STANDARD_PIECES = [
 ];
 
 export const PAWN_PIECES = [
-    ...createPawnRow(Active.FALSE, 6),
-    ...createPawnRow(Active.TRUE, 1)
+    ...createPawnRow(Active.TRUE, 1),
+    ...createPawnRow(Active.FALSE, 6)
 ];
-
-
-const parseType = (san, q) =>
-{
-    if (san.length === 0) return san;
-    if (san[0] in SanType)
-    {
-        q.type = SanType[san[0]];
-        return san.substr(1);
-    }
-
-    q.type = Type.PAWN;
-    return san;
-}
-
-const parsePos = (san, q, type) =>
-{
-    if (!san) return san;
-    q[type] = {};
-
-    if (san[0] in XCoord)
-    {
-        q[type].x = XCoord[san[0]];
-        san = san.substr(1);
-    }
-
-    if (san[0] in YCoord)
-    {
-        q[type].y = YCoord[san[0]];
-        san = san.substr(1);
-    }
-
-    return san;
-}
-
-export const parseCapture = (san, q) =>
-{
-    if (!san) return san;
-    if (san[0] in SanType)
-    {
-        q.promotion = SanType[san[0]];
-        san.substr(1);
-    }
-
-    return san;
-}
-
-export const parsePromotion = (san, q) =>
-{
-
-    if (!san) return san;
-    if (san[0] === "x")
-    {
-        q.capture = true;
-        san.substr(1);
-    }
-}
-
-export const parseQfromSAN = (san) =>
-{
-    const q = { };
-
-    san = parseType(san, q);
-    san = parsePos(san, q, "pos1");
-    san = parseCapture(san, q)
-    san = parsePos(san, q, "pos2");
-    san = parsePromotion(san, q);
-
-    return q;
-}
-
-const searchMovesFromSAN = (san, moves) =>
-{
-    const q = {};
-
-    if (SanType.hasOwnProperty(san[0]))
-    {
-        q.type = SanType[san[0]];
-    }
-    else
-    {
-        q.type = Type.PAWN;
-    }
-}
-
-export const intepretQ = function()
-{
-
-}
-
-

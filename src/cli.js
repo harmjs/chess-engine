@@ -1,10 +1,10 @@
 import readline from 'readline';
 
-import { PAWN_PIECES, STANDARD_PIECES } from './utility.js';
+import { PAWN_PIECES, STANDARD_PIECES } from './helpers.js';
 import { findMoves } from './evaluate.js';
 import { argv } from 'process';
-import { debugBoard, debugPiece } from './debug.js';
-import { isFunction } from 'lodash';
+import { debugBoard, debugMove, debugPiece } from './debug.js';
+import { createSanTree } from './san.js';
 
 const modes = {
     standard: STANDARD_PIECES,
@@ -24,15 +24,22 @@ const script = {
     quit: "Thanks for checking out my project.",
     modeNotFound: (mode) => `There is no mode called '${mode}'.`,
     commandNotFound: (command) => `'${command}' is not a recognized command.`,
-    todo: (command) => `'${command}' has not been implemented yet.`
+    todo: (command) => `'${command}' has not been implemented yet.`,
+    move: "What will be white's move?"
 }
 
 let game = null;
 
-const playCommands = {
-    play: () =>
+const gameCommands = {
+    turn: () =>
     {
-        const moves = findMoves(game.pieces);
+
+    },
+    suggestMove: (san) =>
+    {
+        const move = parseMovefromSAN(san);
+
+        const match = findMoveMatch(move, moves);
     }
 };
 
@@ -41,10 +48,35 @@ const menuCommands = {
     {
         if (modes.hasOwnProperty(mode))
         {
-            const game = {
+            let game = {
                 turn: 0,
-                pieces: modes[mode]
+                pieces: modes[mode],
             };
+
+
+            const getMoveInput = () =>
+            {
+                const sanTree = createSanTree(findMoves(game.pieces));
+
+                const promptMove = (san) =>
+                {
+                    if (san in sanTree)
+                    {
+                        game.pieces = sanTree[san].nextPieces;
+                        getMoveInput();
+                    }
+                    else
+                    {
+                        rl.question("That move isn't valid. What move does white make?", promptMove);
+                    }
+                }
+
+                console.log(debugBoard(game.pieces));
+
+                rl.question("What move does white play?", promptMove);
+            }
+
+            getMoveInput();
         }
         else
         {
@@ -60,17 +92,6 @@ const menuCommands = {
         rl.question(compose(script.todo("help"), script.menu), menu);
     }
 };
-
-const play = (str) =>
-{
-    const args = str.split(' ');
-    const command = args.shift();
-
-    if (menuCommands.hasOwnProperty(command))
-    {
-
-    }
-}
 
 const menu = (str) =>
 {

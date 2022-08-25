@@ -25,36 +25,38 @@ export const findMoves = (pieces) =>
     const activePieces = pieces.filter((piece) => 
         ((piece & Active.ON) === Active.TRUE));
 
-    for (let piece of activePieces)
+    for (let fromPiece of activePieces)
     {
-        const index = indexMap.get(piece);
+        const index = indexMap.get(fromPiece);
 
-        if ((piece & Active.ON) === Active.TRUE)
+        if ((fromPiece & Active.ON) === Active.TRUE)
         {
-            if (!coordMap.has(piece + Direction.NORTH & Coord.ON))
+            if (!coordMap.has(fromPiece + Direction.NORTH & Coord.ON))
             {
-                if ((piece & Moved.ON) === Moved.FALSE)
+                if ((fromPiece & Moved.ON) === Moved.FALSE)
                 {
-                    if (!coordMap.has(piece + PAWN_PUSH_DIRECTION & Coord.ON))
+                    if (!coordMap.has(fromPiece + PAWN_PUSH_DIRECTION & Coord.ON))
                     {
-                        const nextPiece = piece + PAWN_PUSH_DIRECTION + Moved.TRUE;
-                        const nextPieces = modifyPieces(pieces, nextPiece, index);
+                        const toPiece = fromPiece + PAWN_PUSH_DIRECTION + Moved.TRUE;
+                        const nextPieces = modifyPieces(pieces, toPiece, index);
 
-                        moves.push({ piece, nextPieces, nextPiece });
+                        moves.push({ fromPiece, toPiece, nextPieces });
                     }
-                    const nextPiece = piece + Direction.NORTH + Moved.TRUE;
-                    const nextPieces = modifyPieces(pieces, nextPiece, index);
+                    const toPiece = fromPiece + Direction.NORTH + Moved.TRUE;
+                    const nextPieces = modifyPieces(pieces, toPiece, index);
 
-                    moves.push({ piece, nextPiece, nextPieces });
+                    moves.push({ fromPiece, toPiece, nextPieces });
                 }
                 else
                 {
-                    const nextPiece = piece + Direction.NORTH;
-                    const nextPieces = modifyPieces(pieces, nextPiece, index);
-                    moves.push({ piece, nextPiece, nextPieces });
+                    const toPiece = fromPiece + Direction.NORTH;
+                    const nextPieces = modifyPieces(pieces, toPiece, index);
+                    moves.push({ toPiece, fromPiece, nextPieces });
                 }
             }
         }
+
+        /*
 
         for (let direction in PAWN_CAPTURE_DIRECTIONS)
         {
@@ -72,6 +74,8 @@ export const findMoves = (pieces) =>
                 }
             }
         }
+
+        */
     }
     return moves;
 }

@@ -1,36 +1,31 @@
-import { debugQ } from './debug.js';
-import { PAWN_PIECES, STANDARD_PIECES, isOnBoard, parseQfromSAN } from './helpers.js';
-import { XCoord, YCoord, Type, KNIGHT_DIRECTIONS, Active, Direction, Coord, Moved, PAWN_PUSH_DIRECTION, KING_ROW_TYPES } from './constants.js';
+import { Active, Type, TYPE_NAMES, XCoord, X_COORD_NAMES, YCoord, Coord, Y_COORD_NAMES } from './constants.js';
+import { debugBoard, debugPiece, debugMove, debugCoord } from './debug.js';
 import { findMoves } from './evaluate.js';
+import { start } from './cli.js';
 
-import _ from 'lodash';
+import { parseMovefromSAN, createSanTree, findMoveInMoves } from './san.js';
 
-//const plays = findMoves(PAWN_PIECES);
+import { PAWN_PIECES, STANDARD_PIECES } from './helpers.js';
 
-//console.log(plays);
 
-//console.log(debugBoard(PAWN_PIECES));
+start();
 
-const debugQParse = (san) => console.log(debugQ(parseQfromSAN(san)));
+// ACTIVE === WHITE in this context
+// 7 is 
 
-const testQParseFromSan = (san, compareQ) =>
-{
-    const qDebug = debugQ(parseQfromSAN(san));
-    return _.isEqual(qDebug, compareQ);
-}
+//const pieces = PAWN_PIECES;
+//const command = "e4";
 
-const testCases = [
-    ["Naxa4", { type: "KNIGHT", pos1: { x: "a" }, pos2: { x: "a", y: "4"}, capture: true, }],
-    ["b7Q", { type: "PAWN", pos1: { x: "b", y: "7" }, promote: "QUEEN" }],
-    ["Rb6xb8", { type: "ROOK", pos1: { x: "b", "y": "6" }, pos2: { x: "b", y: "8"}, capture: true }]
-];
+//const q = parseQfromSAN(command);
 
-for (let [san, compareQ] of testCases)
-{
-    const result = debugQ(parseQfromSAN(san));
+//const moves = findMoves(pieces);
 
-    console.log(_.isEqual(compareQ, result), result, compareQ);
-}
+//const moves = findMoves(STANDARD_PIECES);
+//const san = "e3";
+//const move = parseMovefromSAN(san);
 
-//console.log(plays.length);
-//plays.map((pieces) => console.log(debugBoard(pieces)));
+//const results = findMoveInMoves(move, [moves[9]]);
+
+//const result = createSanTree(findMoves(STANDARD_PIECES));
+
+//console.log(result);

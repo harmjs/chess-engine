@@ -1,8 +1,8 @@
 import { Moved, Type, XCoord, YCoord, Coord, Active, Enpassent, Y_COORD_NAMES,
-    Y_COORD_NAMES_REVERSED, X_COORD_NAMES, ActiveType, IType, IXCoord, IYCoord
+    Y_COORD_NAMES_REVERSED, ACTIVE_TYPE_TO_CHAR, X_COORD_NAMES, ActiveType, IType, IXCoord, IYCoord, Captured
 } from './constants.js';
 
-import { coordNameToCoordBits, isOnBoard } from './helpers.js';
+import { coordNameToCoordBits, isXOnBoard, isYOnBoard, isOnBoard } from './helpers.js';
 
 const boardStart     = "___|_________________________|___ \n";
 const boardEnd       = "‾‾‾|‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾|‾‾‾ \n";
@@ -55,42 +55,61 @@ export const debugRank = (piece) =>
     return IYCoord[piece & YCoord.ON];
 }
 
-export const debugCoord = (piece) =>
+export const debugXCoord = (piece) =>
 {
-    if (isOnBoard(piece)) return IXCoord[piece & XCoord.ON] + IYCoord[piece & YCoord.ON];
-    return 'out of range';
+    if (isXOnBoard(piece)) return IXCoord[piece & XCoord.ON];
+    if ((piece & XCoord) === 0) return "UNDEFINED";
+    return "OUT_OF_RANGE";
 }
 
-export const debugType = (piece) =>
+export const debugYCoord = (piece) =>
 {
-    const type = (piece & Type.ON);
-    return IType[type]
+    if (isYOnBoard(piece)) return IYCoord[piece & YCoord.ON];
+    if ((piece & YCoord) === 0) return "UNDEFINED";
+    return "OUT_OF_RANGE";
 }
+
+export const debugCoord = (piece) => ({ 
+    x: debugXCoord(piece),  
+    y: debugYCoord(piece) });
+
+export const debugType = (piece) => IType[(piece & Type.ON)];
 
 export const debugPiece = (piece, short=false) =>
 {
     const type = (piece & Type.ON);
     const active = (piece & Active.ON);
     
+    const coord = debugCoord(piece)
+
     const debug = {
         active: active === Active.TRUE,
         type: IType[type],
-        coord: debugCoord(piece),
+        x: coord.x,
+        y: coord.y
     };
 
     if (short) return debug;
 
+    const capture = (piece & Captured.ON) === Captured.TRUE;
+
+    if (capture) debug["capture"] = true;
+
     if (type === Type.PAWN || type === Type.ROOK || type === Type.KING)
-    {
         debug["moved"] = (piece & Moved.ON) === Moved.TRUE;
-    }
 
     if (type === Type.PAWN)
-    {
         debug["enpassent"] = (piece & Enpassent.ON) === Enpassent.TRUE;
-    }
 
     return debug;
+}
+
+export const debugMove = (move, short=false) =>
+{
+    return { 
+        fromPiece: debugPiece(move.fromPiece, short),
+        toPiece: debugPiece(move.toPiece, short)
+    };
 }
 
 export const debugBin = (piece) => piece.toString(2).padStart(16, '0');
@@ -106,12 +125,15 @@ const debugQPos = ({ x, y }) =>
     return qPos;
 }
 
-export const debugQ = ({ type, pos1, pos2 }) => 
+export const debugQ = ({ type, pos1, pos2, capture, promote }) => 
 {
     const debug = {};
 
     if (type) debug.type = debugType(type);
     if (pos1) debug.pos1 = debugQPos(pos1);
     if (pos2) debug.pos2 = debugQPos(pos2);
+    if (capture) debug.capture = capture;
+    if (promote) debug.promote = debugType(promote);
+
     return debug;
 }

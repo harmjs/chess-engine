@@ -1,15 +1,16 @@
-import { toggleUint16 } from './utility.js';
+import { piecesToStr, toggleUint16 } from './utility.js';
 import invert from "lodash/invert.js"; 
 
 export const ARR_8 = [...Array(8)].map((_, index) => index);
+
 export const BOOL_NAMES = ["FALSE", "TRUE"];
 export const TYPE_NAMES = [
-    "PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING", "MOVEMENT"
+    "NULL", "PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING", "MOVEMENT",
 ];
 
 export const X_COORD_NAMES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 export const Y_COORD_NAMES = ["1", "2", "3", "4", "5", "6", "7", "8"];
-
+  
 /*
  * Piece encoding into uint16:
  *   1 bit tracking whether piece has moved (only used for king, pawns, rooks)
@@ -30,7 +31,7 @@ export const VIEW_SIZES = [1, 1, 1, 3, 4, 4, 1, 1];
 export const VIEW_MASKS = (() => 
 {
     const viewMasks = [];
-    for (let a = 0, b = 0; a < VIEW_SIZES.length; b+= VIEW_SIZES[a], a++)
+    for (let a = 0, b = 0; a < VIEW_SIZES.length; b+= VIEW_SIZES[a], a++) 
     {
         let viewMask = 0;
         for (let c = 0; c < VIEW_SIZES[a]; c++) 
@@ -67,16 +68,26 @@ export const Active = createFactoredEnum(ViewIndex.ACTIVE, BOOL_NAMES);
 export const Type = createFactoredEnum(ViewIndex.TYPE, TYPE_NAMES);
 export const XCoord = createFactoredEnum(ViewIndex.X_COORD, X_COORD_NAMES, 4);
 export const YCoord = createFactoredEnum(ViewIndex.Y_COORD, Y_COORD_NAMES, 4);
-export const Captured = createFactoredEnum(ViewIndex.CAPTURED, BOOL_NAMES, 1);
+export const Captured = createFactoredEnum(ViewIndex.CAPTURED, BOOL_NAMES);
+
+XCoord.NULL = 0;
+YCoord.NULL = 0;
+
+XCoord.RANGE_ON = 2 ** 8 + 2 ** 9;
+XCoord.RANGE_OFF = toggleUint16(XCoord.RANGE_ON);
+
+YCoord.RANGE_ON = 2 ** 12 + 2 ** 13;
+YCoord.RANGE_OFF = toggleUint16(YCoord.RANGE_ON);
+
 
 export const Coord = { 
     ON: XCoord.ON + YCoord.ON, 
-    OFF: toggleUint16(XCoord.ON + YCoord.ON) 
+    OFF: toggleUint16(XCoord.ON + YCoord.ON),
+    NULL: XCoord.NULL + YCoord.NULL
 };
 
-XCoord.RANGE_ON = 2 ** 8 + 2 ** 9;
-YCoord.RANGE_ON = 2 ** 12 + 2 ** 13;
 Coord.RANGE_ON = XCoord.RANGE_ON + YCoord.RANGE_ON;
+Coord.RANGE_OFF = toggleUint16(Coord.RANGE_ON);
 
 export const ActiveType = { ON: Active.ON + Type.ON };
 
@@ -115,21 +126,21 @@ export const KNIGHT_DIRECTIONS = [
 export const PAWN_CAPTURE_DIRECTIONS = [Direction.NORTH_EAST, Direction.NORTH_WEST];
 export const PAWN_PUSH_DIRECTION = Direction.NORTH + Direction.NORTH;
 
-export const Y_COORD_NAMES_REVERSED = Y_COORD_NAMES.reverse();
+export const Y_COORD_NAMES_REVERSED = Y_COORD_NAMES.slice().reverse();
 
 export const ACTIVE_TYPE_TO_CHAR = {
-    [Type.PAWN + Active.TRUE]: "♙ ",
-    [Type.KNIGHT + Active.TRUE]: "♘ ",
-    [Type.BISHOP + Active.TRUE]: "♗ ",
-    [Type.ROOK + Active.TRUE]: "♖ ",
-    [Type.QUEEN + Active.TRUE]: "♕ ",
-    [Type.KING + Active.TRUE]: "♔ ",
-    [Type.PAWN + Active.FALSE]: "♟︎ ",
-    [Type.KNIGHT + Active.FALSE]: "♞ ",
-    [Type.BISHOP + Active.FALSE]: "♝ ",
-    [Type.ROOK + Active.FALSE]: "♜ ",
-    [Type.QUEEN + Active.FALSE]: "♛ ",
-    [Type.KING + Active.FALSE]: "♚ ",
+    [Type.PAWN + Active.FALSE]: "♙ ",
+    [Type.KNIGHT + Active.FALSE]: "♘ ",
+    [Type.BISHOP + Active.FALSE]: "♗ ",
+    [Type.ROOK + Active.FALSE]: "♖ ",
+    [Type.QUEEN + Active.FALSE]: "♕ ",
+    [Type.KING + Active.FALSE]: "♔ ",
+    [Type.PAWN + Active.TRUE]: "♟︎ ",
+    [Type.KNIGHT + Active.TRUE]: "♞ ",
+    [Type.BISHOP + Active.TRUE]: "♝ ",
+    [Type.ROOK + Active.TRUE]: "♜ ",
+    [Type.QUEEN + Active.TRUE]: "♛ ",
+    [Type.KING + Active.TRUE]: "♚ ",
     [Type.MOVEMENT + Active.TRUE]: "XX",
     [Type.MOVEMENT + Active.FALSE]: "XX"
 };
@@ -145,3 +156,4 @@ export const SanType = {
 export const IType = invert(Type);
 export const IXCoord = invert(XCoord);
 export const IYCoord = invert(YCoord);
+export const ISanType = invert(SanType);
