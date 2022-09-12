@@ -1,7 +1,13 @@
-import { Active, Coord, Moved, Type, Direction, Enpassent, PAWN_CAPTURE_DIRECTIONS, PAWN_PUSH_DIRECTION, Captured } from "./constants.js";
+import { sortedIndex } from "lodash";
+import { Active, Coord, Moved, Type, Direction, Enpassent, 
+    PAWN_CAPTURE_DIRECTIONS, PAWN_PUSH_DIRECTION, Captured, 
+    YCoord, IXCoord, XCoord, IYCoord, ENPASSANT_CAPTURE_DIRECTIONS, KNIGHT_DIRECTIONS
+} from "./constants.js";
 import { debugPiece, debugCoord } from "./debug.js";
 import { isOnBoard } from './helpers.js';
 
+// the replace index doesn't actual need to be known
+// all we have to do is remove the pieces and order them by length
 
 const modifyPieces = (pieces, replacePiece, replaceIndex, removeIndex=null) =>
 {
@@ -13,11 +19,84 @@ const modifyPieces = (pieces, replacePiece, replaceIndex, removeIndex=null) =>
     return nextPieces;
 }
 
+const findPawnMoves = () =>
+{
+    const index = indexMap.get(from);
+    if ((from & Active.ON) === Active.TRUE)
+    {
+        if (!coordMap.has(from + Direction.NORTH & Coord.ON))
+        {
+            if ((from & Moved.ON) === Moved.FALSE)
+            {
+                if (!coordMap.has(from + PAWN_PUSH_DIRECTION & Coord.ON))
+                {
+                    const to = from + PAWN_PUSH_DIRECTION + Moved.TRUE + Enpassent.TRUE;
+                    const nextPieces = modifyPieces(pieces, to, index);
+
+                    moves.push({ from, to, nextPieces });
+                }
+                const to = from + Direction.NORTH + Moved.TRUE;
+                const nextPieces = modifyPieces(pieces, to, index);
+
+                moves.push({ from, to, nextPieces });
+            }
+            else
+            {
+                const to = from + Direction.NORTH;
+                const nextPieces = modifyPieces(pieces, to, index);
+                moves.push({ to, from, nextPieces });
+            }
+        }
+    }
+
+    for (let direction of PAWN_CAPTURE_DIRECTIONS)
+    {
+        if (coordMap.has((from + direction) & Coord.ON))
+        {
+            const captured = coordMap.get((from + direction) & Coord.ON);
+            if ((captured & Active.ON) === Active.FALSE)
+            {
+                const to = from + direction + Captured.TRUE;
+                const capturedIndex = indexMap.get(captured);
+                const nextPieces = modifyPieces(pieces, to, index, 
+                    capturedIndex);
+                
+                moves.push({ captured, to, from, nextPieces });
+            }
+        }
+    }
+
+    // Enpassent logic
+    if ((from & YCoord.ON) === IYCoord["5"])
+    {
+        for (let direction of ENPASSANT_CAPTURE_DIRECTIONS)
+        {
+            if (coordMap.has((from + direction) & Coord.ON))
+            {
+                const captured = coordMap.has((from + direction));
+
+                if (captured & Enpassent.ON === Enpassent.TRUE)
+                {
+                    const to = from + direction + Captured.TRUE;
+                    const capturedIndex = indexMap.get(captured);
+                    const nextPieces = modifyPieces(pieces, to, index, 
+                        capturedIndex);
+                }
+            }
+        }
+    }
+}
+
+const findMovesByType =  {
+    [Type.PAWN]: findPawnMoves,
+    [Type.KNIGHT]: findMovesInDirection(KNIGHT_DIRECTIONS)
+}
+
 export const findMoves = (pieces) =>
 {
     const moves = [];
 
-    const coordMap = new Map(pieces.map((piece) => 
+    const coordMap = new Map(pieces.map((piece) =>
         [piece & Coord.ON, piece]));
     const indexMap = new Map((pieces.map((piece, index) => 
         [piece, index])));
@@ -25,90 +104,83 @@ export const findMoves = (pieces) =>
     const activePieces = pieces.filter((piece) => 
         ((piece & Active.ON) === Active.TRUE));
 
-    for (let fromPiece of activePieces)
+    for (let from of activePieces)
     {
-        const index = indexMap.get(fromPiece);
-
-        if ((fromPiece & Active.ON) === Active.TRUE)
-        {
-            if (!coordMap.has(fromPiece + Direction.NORTH & Coord.ON))
-            {
-                if ((fromPiece & Moved.ON) === Moved.FALSE)
-                {
-                    if (!coordMap.has(fromPiece + PAWN_PUSH_DIRECTION & Coord.ON))
-                    {
-                        const toPiece = fromPiece + PAWN_PUSH_DIRECTION + Moved.TRUE;
-                        const nextPieces = modifyPieces(pieces, toPiece, index);
-
-                        moves.push({ fromPiece, toPiece, nextPieces });
-                    }
-                    const toPiece = fromPiece + Direction.NORTH + Moved.TRUE;
-                    const nextPieces = modifyPieces(pieces, toPiece, index);
-
-                    moves.push({ fromPiece, toPiece, nextPieces });
-                }
-                else
-                {
-                    const toPiece = fromPiece + Direction.NORTH;
-                    const nextPieces = modifyPieces(pieces, toPiece, index);
-                    moves.push({ toPiece, fromPiece, nextPieces });
-                }
-            }
-        }
-
-        /*
-
-        for (let direction in PAWN_CAPTURE_DIRECTIONS)
-        {
-            if (coordMap.has(piece + direction & Coord.ON))
-            {
-                const occupier = coordMap.get(piece + direction & Coord.ON);
-                if (occupier & Active.ON === Active.FALSE)
-                {
-                    const nextPiece = piece + direction;
-                    const capturedIndex = indexMap.get(occupier);
-                    const nextPieces = modifyPieces(pieces, nextPiece, nextPieces, 
-                        capturedIndex);
-                    
-                    moves.push({piece, nextPiece, nextPieces, occupier });
-                }
-            }
-        }
-
-        */
+        
     }
     return moves;
 }
 
-const movePawn = (pawn, coordMap) =>
+const findMovesInLineDirections = (lineDirections, from, index, coordMap, moves) =>
 {
-    const moves = [];
-
-    const coord = pawn & Coord.MASK;
-
-    // move forward
-    if (!coordMap.has(coord + Direction.NORTH))
+    for (let lineDirection of lineDirections)
     {
-        moves.push(pawn + Direction.NORTH);
-    }
-    else
-    {
+        let multiplier = 1;
 
-    }
-
-    // capture
-    for (let direction in PAWN_CAPTURE_DIRECTIONS)
-    {
-        let nextCoord = coord + direction;
-        if (coordMap.has(nextCoord))
+        while (true)
         {
-            const occupier = coordMap.get(nextCoord);
+            let to = lineDirection * multiplier;
 
-            if ((occupier & Active.MASK) === Active.FALSE)
+            if (!isOnBoard(to))
             {
-                moves.push([pawn, occupier]);
+                break;
+            }
+            else if (coordMap.has(to & Coord.ON))
+            {
+                const captured = coordMap.get(to & Coord.ON)
+
+                if ((captured & Active.ON) === Active.FALSE)
+                {
+                    const capturedIndex = indexMap.get(captured);
+                    const nextPieces = modifyPieces(pieces, to, index, 
+                        capturedIndex);
+                    to = to + Captured.TRUE;
+
+                    moves.push({ captured, to, from, nextPieces });
+                }
+                break;
+            }
+            else
+            {
+                const nextPieces = modifyPieces(pieces, to, index, 
+                    capturedIndex);
+                moves.push({ to, from, nextPieces });
+            }
+            multiplier += 1;
+        }
+    }
+}
+
+const findMovesInDirections = (directions) =>
+{
+    return (from, index, coordMap, moves) =>
+    {
+        for (let direction of directions)
+        {
+            let to = from + direction;
+
+            if (coordMap.has(to & Coord.ON))
+            {
+                const captured = coordMap.has(to & Coord.ON);
+
+                if ((captured & Active.ON) === Active.FALSE)
+                {
+                    const capturedIndex = indexMap.get(captured);
+                    const nextPieces = modifyPieces(pieces, to, index, 
+                        capturedIndex);
+                    to = to + Captured.TRUE;
+
+                    moves.push({ captured, to, from, nextPieces });
+                }
+            }
+            else if (isOnBoard(to))
+            {
+                const nextPieces = modifyPieces(pieces, to, index, 
+                    capturedIndex);
+                to = to + Captured.TRUE;
+
+                moves.push({ captured, to, from, nextPieces });
             }
         }
     }
-    return moves;
 }

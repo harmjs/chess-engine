@@ -2,9 +2,10 @@ import readline from 'readline';
 
 import { PAWN_PIECES, STANDARD_PIECES } from './helpers.js';
 import { findMoves } from './evaluate.js';
-import { argv } from 'process';
+import { argv, debugPort } from 'process';
 import { debugBoard, debugMove, debugPiece } from './debug.js';
 import { createSanTree } from './san.js';
+import { debuglog } from 'util';
 
 const modes = {
     standard: STANDARD_PIECES,
@@ -41,7 +42,45 @@ const gameCommands = {
 
         const match = findMoveMatch(move, moves);
     }
-};
+}
+
+/*
+const playGame = ({ mode="pawns" }) =>
+{
+    if (!modes.hasOwnProperty(mode)) return 
+        rl.question(compose(script.modeNotFound(mode), script.menu), menu);
+
+    const game = {
+        turn: 0,
+        pieces: modes[mode]
+    };
+
+    const getMoveInput = () =>
+    {
+        const sanTree = createSanTree(findMoves(game.pieces));
+        const currentTurn = Index.active()
+        console.log(debugBoard(pieces));
+        
+        const promptMove = (san) =>
+        {
+            if (san in sanTree)
+            {
+                game.pieces = sanTree[san].nextPieces;
+                getMoveInput();
+            }
+            else
+            {
+                rl.question("That move isn't valid. What move does white make?", promptMove);
+            }
+        }
+
+            rl.question("What move does white play?", promptMove);
+
+        getMoveInput();
+    }
+}
+*/
+
 
 const menuCommands = {
     new: (mode="pawns") =>
@@ -52,31 +91,6 @@ const menuCommands = {
                 turn: 0,
                 pieces: modes[mode],
             };
-
-
-            const getMoveInput = () =>
-            {
-                const sanTree = createSanTree(findMoves(game.pieces));
-
-                const promptMove = (san) =>
-                {
-                    if (san in sanTree)
-                    {
-                        game.pieces = sanTree[san].nextPieces;
-                        getMoveInput();
-                    }
-                    else
-                    {
-                        rl.question("That move isn't valid. What move does white make?", promptMove);
-                    }
-                }
-
-                console.log(debugBoard(game.pieces));
-
-                rl.question("What move does white play?", promptMove);
-            }
-
-            getMoveInput();
         }
         else
         {

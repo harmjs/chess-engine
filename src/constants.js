@@ -123,8 +123,11 @@ export const KNIGHT_DIRECTIONS = [
     Direction.NORTH + Direction.NORTH_WEST
 ];
 
+export const KING_DIRECTIONS = [...Object.values(Direction)];
+
 export const PAWN_CAPTURE_DIRECTIONS = [Direction.NORTH_EAST, Direction.NORTH_WEST];
 export const PAWN_PUSH_DIRECTION = Direction.NORTH + Direction.NORTH;
+export const ENPASSANT_CAPTURE_DIRECTIONS = [Direction.EAST, Direction.WEST];
 
 export const Y_COORD_NAMES_REVERSED = Y_COORD_NAMES.slice().reverse();
 

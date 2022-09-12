@@ -1,93 +1,181 @@
 import { SanType, Type, Active, Moved, XCoord, YCoord, Coord, ISanType, Captured, IXCoord, IYCoord} from "./constants.js";
-import { debugRank, debugType } from "./debug.js";
+import { debugPiece, debugRank, debugType } from "./debug.js";
 
 
 // san => move
 // move => san
 
+// 1. If there is only 1 piece of a type, it never needs to fromSquare
+// 2. If there are 2+ piece of a type, but only one can make it to the toSqaure, it doesn't need a fromSqaure
+// 3. If there are 2+ pieces of a type which can make it to a to the square, only include the identifying file
+// 4. If there are 2+ pieces of a type which can make it to the sqaure
 
-export const createSanTree = (moves) =>
+// lets just solve it for pawns for now :)
+
+
+// Pawn push logic
+// check if it is a pawn push (type is pawn and no captured)
+// Coord toSquare + ?Type.promotedTo
+// no collision possible
+
+// perhaps instead of being greedy, its better to write the full forms and then shrink...
+// write the full forms and then shrink if possible...
+
+// i like being greedy though :(
+
+// Pawn capture logic 
+// check if it is a pawn capture (type is pawn and capture)
+
+// 1. CoordX from + x + Coord to + Type to // formula
+// 1. Coord from + x + Coord to + Type to; // formula
+
+// Piece Description Moves
+// 1. Type from + ?"x" + Coord to; // if collision reformulate
+// 2. Type from + YCoord from + ?"x" + Coord to; // formula
+// 3. Type from + XCoord from + ?"x" + Coord to; // formula
+// 4. Type from + Coord from + "?"x + Coord to; // formula
+
+const pawnSANFormula = (move) => (
+    IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]);
+    //+ (move.to & Type.ON !== Type.PAWN) ? ISanType[move.to & Type.ON] : "");
+
+const pawnCaptureSanFormulas = [
+    (move) => 
+    (
+        IXCoord[move.from & XCoord.ON] + "x"
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]
+        + ((move.to & Type.ON) !== Type.PAWN ? ISanType[move.to & Type.ON] : "")),
+    (move) => (
+        IXCoord[move.from & XCoord.ON] + IYCoord[move.from & YCoord.ON] + "x"
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]
+        + ((move.to & Type.ON) !== Type.PAWN ? ISanType[move.to & Type.ON] : ""))
+];
+
+const pieceSANFormulas = [
+    (move) => 
+        ISanType[move.from & Type.ON]
+        + move.to & Captured.ON === Captured.True ? "x" : ""
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON],
+    (move) => 
+        ISanType[move.from & Type.ON]
+        + IYCoord[move.from & YCoord.ON]
+        + move.to & Captured.ON === Captured.True ? "x" : ""
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON],
+    (move) => 
+        ISanType[move.from & Type.ON]
+        + IXCoord[move.from & XCoord.ON]
+        + move.to & Captured.ON === Captured.True ? "x" : ""
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON],
+    (move) => 
+        ISanType[move.from & Type.ON]
+        + IXCoord[move.from & XCoord.ON] + IYCoord[move.from & YCoord.ON]
+        + (move.to & Captured.ON) === Captured.True ? "x" : ""
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON]
+];
+
+const recurseMarkSan = (sanLibrary, formulas, formulaIndex, moves, moveIndex) =>
 {
-    const sanTree = {};
+    const formula = formulas[formulaIndex];
+    const san = formula(moves[moveIndex]);
 
-    for (let [index, { toPiece, fromPiece }] of moves.entries())
+    console.log(san);
+
+    if (san in sanLibrary)
     {
-        const fromType = fromPiece & Type.ON;
-        const toXCoord = toPiece & XCoord.ON;
-        const toYCoord = toPiece & YCoord.ON;
-        const toCapture = toPiece & Captured.ON;
+        if (!Array.isArray(sanLibrary[san]))
+             sanLibrary[san] = [sanLibrary[san]];
 
-        if (fromType === Type.PAWN & toCapture === Captured.FALSE)
+        sanLibrary[san].push(moveIndex)
+
+        for (let collidedMoveIndex in sanLibrary[san])
+            recurseMarkSan(sanLibrary, formulas, formulaIndex + 1, moves, collidedMoveIndex);
+    }
+    else
+    {
+        sanLibrary[formula] = moveIndex;
+    }
+}
+
+export const sanLibrary = (moves) =>
+{
+    const sanLibrary = {};
+
+    for (let index in moves)
+    {
+        const move = moves[index];
+
+        if ((move.from & Type.ON) !== Type.PAWN)
         {
-            const san = IXCoord[toXCoord] + IYCoord[toYCoord];
-            sanTree[san] = index;
+            recurseMarkSan(sanLibrary, pieceSANFormulas, 0, moves, index);
+        }
+        else if ((move.to & Captured.ON) === Captured.FALSE)
+        {
+            sanLibrary[pawnSANFormula(move)] = parseInt(index);
+        }
+        else
+        {
+            recurseMarkSan(sanLibrary, pawnCaptureSanFormulas, 0, moves, index)
         }
     }
-
-    for (let [value, key] of Object.entries(sanTree))
-    {
-        sanTree[value] = moves[key];
-    }
-
-    return sanTree;
+    return sanLibrary;
 }
 
 export const parseMovefromSAN = (san) =>
 {
     const move = {
-        fromPiece: Active.TRUE + Type.PAWN,
-        toPiece: Active.TRUE + Type.PAWN + Moved.TRUE
+        from: Active.TRUE + Type.PAWN,
+        to: Active.TRUE + Type.PAWN + Moved.TRUE
     };
 
     if (san.length && san[0] in SanType)
     {
-        move.fromPiece = (move.fromPiece & Type.OFF) + SanType[san[0]];
-        move.toPiece = (move.fromPiece & Type.OFF) + SanType[san[0]];
+        move.from = (move.from & Type.OFF) + SanType[san[0]];
+        move.to = (move.from & Type.OFF) + SanType[san[0]];
         san = san.substr(1);
     }
 
     if (san.length && san[0] in XCoord)
     {
-        move.toPiece += XCoord[san[0]];
+        move.to += XCoord[san[0]];
         san = san.substr(1);
     }
 
     if (san.length && san[0] in YCoord)
     {
-        move.fromPiece += YCoord[san[0]]
-        move.toPiece += YCoord[san[0]];
+        move.from += YCoord[san[0]]
+        move.to += YCoord[san[0]];
         san = san.substr(1);
     }
 
     if (san.length && san[0] === "x")
     {
-        move.toPiece += Captured.TRUE;
+        move.to += Captured.TRUE;
         san = san.substr(1);
     }
 
     if (san.length && san[0] in XCoord)
     {
-        move.toPiece = (move.toPiece & XCoord.OFF) + XCoord[san[0]];
+        move.to = (move.to & XCoord.OFF) + XCoord[san[0]];
         san = san.substr(1);
     } 
     else
     {
-        move.fromPiece = (move.fromPiece & XCoord.OFF);
+        move.from = (move.from & XCoord.OFF);
     }
 
     if (san.length && san[0] in YCoord)
     {
-        move.toPiece = (move.toPiece & YCoord.OFF) + YCoord[san[0]];
+        move.to = (move.to & YCoord.OFF) + YCoord[san[0]];
         san = san.substr(1);
     }
     else
     {
-        move.fromPiece = (move.fromPiece & YCoord.OFF);
+        move.from = (move.from & YCoord.OFF);
     }
 
     if (san.length && san[0] in SanType)
     {
-        move.toPiece = (move.toPiece & Type.OFF) + SanType[san[0]];
+        move.to = (move.to & Type.OFF) + SanType[san[0]];
         san = san.substr(1);
     }
 
@@ -119,8 +207,8 @@ export const findMoveInMoves = (targetMove, candidateMoves) =>
 {
     return candidateMoves
     .map((candidateMove, index) => (
-        findMatchScore(targetMove.fromPiece, candidateMove.fromPiece)
-        + findMatchScore(targetMove.fromPiece, candidateMove.fromPiece)))
+        findMatchScore(targetMove.from, candidateMove.from)
+        + findMatchScore(targetMove.to, candidateMove.to)))
     .reduce((result, score, index) => 
     {
         if (score > result.scoreToBeat) return ({
@@ -136,14 +224,6 @@ export const findMoveInMoves = (targetMove, candidateMoves) =>
 }
 
 
-// 1. If there is only 1 piece of a type, it never needs to fromSquare
-// 2. If there are 2+ piece of a type, but only one can make it to the toSqaure, it doesn't need a fromSqaure
-// 3. If there are 2+ pieces of a type which can make it to a to the square, only include the identifying file
-// 4. If there are 2+ pieces of a type which can make it to the sqaure
-
-
-// lets just solve it for pawns for now :)
-// 
 
 const parseTree = {
 

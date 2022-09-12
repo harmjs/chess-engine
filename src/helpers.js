@@ -49,3 +49,8 @@ export const PAWN_PIECES = [
     ...createPawnRow(Active.TRUE, 1),
     ...createPawnRow(Active.FALSE, 6)
 ];
+
+export const PAWN_CAPTURE_DEBUG = [
+    ...createPawnRow(Active.TRUE, 3),
+    ...createPawnRow(Active.FALSE, 4),
+];
