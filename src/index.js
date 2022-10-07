@@ -7,8 +7,11 @@ import { parseMovefromSAN, findMoveInMoves, sanLibrary } from './san.js';
 import { PAWN_CAPTURE_DEBUG, PAWN_PIECES, STANDARD_PIECES } from './helpers.js';
 
 
+
 const moves = findMoves(PAWN_CAPTURE_DEBUG);
 
-console.log(moves.length);
+console.log(moves.map(((move) => debugMove(move))));
 
-console.log(sanLibrary(findMoves(PAWN_CAPTURE_DEBUG)));
+const library = sanLibrary(moves)
+
+console.log(library)

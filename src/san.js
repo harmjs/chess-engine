@@ -1,3 +1,4 @@
+import { entries } from "lodash";
 import { SanType, Type, Active, Moved, XCoord, YCoord, Coord, ISanType, Captured, IXCoord, IYCoord} from "./constants.js";
 import { debugPiece, debugRank, debugType } from "./debug.js";
 
@@ -40,8 +41,7 @@ const pawnSANFormula = (move) => (
     //+ (move.to & Type.ON !== Type.PAWN) ? ISanType[move.to & Type.ON] : "");
 
 const pawnCaptureSanFormulas = [
-    (move) => 
-    (
+    (move) => (
         IXCoord[move.from & XCoord.ON] + "x"
         + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]
         + ((move.to & Type.ON) !== Type.PAWN ? ISanType[move.to & Type.ON] : "")),
@@ -52,25 +52,25 @@ const pawnCaptureSanFormulas = [
 ];
 
 const pieceSANFormulas = [
-    (move) => 
+    (move) => (
         ISanType[move.from & Type.ON]
-        + move.to & Captured.ON === Captured.True ? "x" : ""
-        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON],
-    (move) => 
+        + ((move.to & Captured.ON) === Captured.True ? "x" : "")
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON]),
+    (move) => (
         ISanType[move.from & Type.ON]
         + IYCoord[move.from & YCoord.ON]
-        + move.to & Captured.ON === Captured.True ? "x" : ""
-        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON],
-    (move) => 
+        + ((move.to & Captured.ON) === Captured.True ? "x" : "")
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON]),
+    (move) => (
         ISanType[move.from & Type.ON]
         + IXCoord[move.from & XCoord.ON]
-        + move.to & Captured.ON === Captured.True ? "x" : ""
-        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON],
-    (move) => 
+        + ((move.to & Captured.ON) === Captured.True ? "x" : "")
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON]),
+    (move) => (
         ISanType[move.from & Type.ON]
         + IXCoord[move.from & XCoord.ON] + IYCoord[move.from & YCoord.ON]
-        + (move.to & Captured.ON) === Captured.True ? "x" : ""
-        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON]
+        + ((move.to & Captured.ON) === Captured.True ? "x" : "")
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON])
 ];
 
 const recurseMarkSan = (sanLibrary, formulas, formulaIndex, moves, moveIndex) =>
@@ -78,21 +78,19 @@ const recurseMarkSan = (sanLibrary, formulas, formulaIndex, moves, moveIndex) =>
     const formula = formulas[formulaIndex];
     const san = formula(moves[moveIndex]);
 
-    console.log(san);
-
     if (san in sanLibrary)
     {
         if (!Array.isArray(sanLibrary[san]))
-             sanLibrary[san] = [sanLibrary[san]];
+            sanLibrary[san] = [sanLibrary[san]];
 
         sanLibrary[san].push(moveIndex)
 
         for (let collidedMoveIndex in sanLibrary[san])
-            recurseMarkSan(sanLibrary, formulas, formulaIndex + 1, moves, collidedMoveIndex);
+            recurseMarkSan(sanLibrary, formulas, formulaIndex++, moves, collidedMoveIndex);
     }
     else
     {
-        sanLibrary[formula] = moveIndex;
+        sanLibrary[san] = moveIndex;
     }
 }
 
@@ -117,6 +115,8 @@ export const sanLibrary = (moves) =>
             recurseMarkSan(sanLibrary, pawnCaptureSanFormulas, 0, moves, index)
         }
     }
+
+
     return sanLibrary;
 }
 

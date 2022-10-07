@@ -107,8 +107,8 @@ export const debugPiece = (piece, short=false) =>
 export const debugMove = (move, short=false) =>
 {
     return { 
-        fromPiece: debugPiece(move.fromPiece, short),
-        toPiece: debugPiece(move.toPiece, short)
+        from: debugPiece(move.from, short),
+        to: debugPiece(move.to, short)
     };
 }
 

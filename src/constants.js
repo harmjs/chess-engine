@@ -112,6 +112,10 @@ const Intercardinal = {
 
 export const Direction = Object.assign({}, Cardinal, Intercardinal);
 
+export const CARDINAL_DIRECTIONS = Object.values(Cardinal);
+export const INTERCARDINAL_DIRECTIONS = Object.values(Intercardinal);
+export const DIRECTIONS = Object.values(Direction);
+
 export const KNIGHT_DIRECTIONS = [
     Direction.NORTH + Direction.NORTH_EAST, 
     Direction.EAST + Direction.NORTH_EAST,

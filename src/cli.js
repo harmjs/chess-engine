@@ -59,7 +59,7 @@ const playGame = ({ mode="pawns" }) =>
     {
         const sanTree = createSanTree(findMoves(game.pieces));
         const currentTurn = Index.active()
-        console.log(debugBoard(pieces));
+       .log(debugBoard(pieces));
         
         const promptMove = (san) =>
         {
