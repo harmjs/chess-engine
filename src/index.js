@@ -1,17 +1,6 @@
-import { Active, Type, TYPE_NAMES, XCoord, X_COORD_NAMES, YCoord, Coord, Y_COORD_NAMES } from './constants.js';
-import { debugBoard, debugPiece, debugMove, debugCoord } from './debug.js';
+import { injectSan } from './san.js';
 import { findMoves } from './evaluate.js';
+import { STANDARD_PIECES } from './helpers.js';
+import { start } from './cli.js';
 
-import { parseMovefromSAN, findMoveInMoves, sanLibrary } from './san.js';
-
-import { PAWN_CAPTURE_DEBUG, PAWN_PIECES, STANDARD_PIECES } from './helpers.js';
-
-
-
-const moves = findMoves(PAWN_CAPTURE_DEBUG);
-
-console.log(moves.map(((move) => debugMove(move))));
-
-const library = sanLibrary(moves)
-
-console.log(library)
+start();

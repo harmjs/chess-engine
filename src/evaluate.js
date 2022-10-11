@@ -1,10 +1,12 @@
 import { Active, Coord, Moved, Type, Direction, Enpassent, 
     PAWN_CAPTURE_DIRECTIONS, PAWN_PUSH_DIRECTION, Captured, 
-    YCoord, IXCoord, XCoord, IYCoord, ENPASSANT_CAPTURE_DIRECTIONS, KNIGHT_DIRECTIONS, CARDINAL_DIRECTIONS, DIRECTIONS, INTERCARDINAL_DIRECTIONS
+    YCoord, IXCoord, XCoord, IYCoord, ENPASSANT_CAPTURE_DIRECTIONS, 
+    KNIGHT_DIRECTIONS, CARDINAL_DIRECTIONS, DIRECTIONS, INTERCARDINAL_DIRECTIONS
 } from "./constants.js";
 import { debugPiece, debugCoord } from "./debug.js";
 import { isOnBoard } from './helpers.js';
 
+// IDEA:
 // the replace index doesn't actual need to be known
 // all we have to do is remove the pieces and order them by length
 
@@ -53,6 +55,7 @@ const findPawnMoves = (from, indexMap, coordMap, moves, pieces) =>
         if (coordMap.has((from + direction) & Coord.ON))
         {
             const captured = coordMap.get((from + direction) & Coord.ON);
+
             if ((captured & Active.ON) === Active.FALSE)
             {
                 const to = from + direction + Captured.TRUE;
@@ -116,7 +119,6 @@ const createFindMovesInLineDirections = (lineDirections) => ((from, indexMap, co
 
                     moves.push({ captured, to, from, nextPieces });
                 }
-                break;
             }
             else
             {
@@ -139,7 +141,7 @@ const createFindMovesInDirections = (directions) => ((from, indexMap, coordMap, 
 
         if (coordMap.has(to & Coord.ON))
         {
-            const captured = coordMap.has(to & Coord.ON);
+            const captured = coordMap.get(to & Coord.ON);
 
             if ((captured & Active.ON) === Active.FALSE)
             {
@@ -153,11 +155,9 @@ const createFindMovesInDirections = (directions) => ((from, indexMap, coordMap, 
         }
         else if (isOnBoard(to))
         {
-            const nextPieces = modifyPieces(pieces, to, index, 
-                capturedIndex);
-            to = to + Captured.TRUE;
+            const nextPieces = modifyPieces(pieces, to, index);
 
-            moves.push({ captured, to, from, nextPieces });
+            moves.push({ to, from, nextPieces });
         }
     }
 });

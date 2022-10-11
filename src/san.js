@@ -1,40 +1,6 @@
-import { entries } from "lodash";
+import invert from "lodash/invert.js"; 
 import { SanType, Type, Active, Moved, XCoord, YCoord, Coord, ISanType, Captured, IXCoord, IYCoord} from "./constants.js";
 import { debugPiece, debugRank, debugType } from "./debug.js";
-
-
-// san => move
-// move => san
-
-// 1. If there is only 1 piece of a type, it never needs to fromSquare
-// 2. If there are 2+ piece of a type, but only one can make it to the toSqaure, it doesn't need a fromSqaure
-// 3. If there are 2+ pieces of a type which can make it to a to the square, only include the identifying file
-// 4. If there are 2+ pieces of a type which can make it to the sqaure
-
-// lets just solve it for pawns for now :)
-
-
-// Pawn push logic
-// check if it is a pawn push (type is pawn and no captured)
-// Coord toSquare + ?Type.promotedTo
-// no collision possible
-
-// perhaps instead of being greedy, its better to write the full forms and then shrink...
-// write the full forms and then shrink if possible...
-
-// i like being greedy though :(
-
-// Pawn capture logic 
-// check if it is a pawn capture (type is pawn and capture)
-
-// 1. CoordX from + x + Coord to + Type to // formula
-// 1. Coord from + x + Coord to + Type to; // formula
-
-// Piece Description Moves
-// 1. Type from + ?"x" + Coord to; // if collision reformulate
-// 2. Type from + YCoord from + ?"x" + Coord to; // formula
-// 3. Type from + XCoord from + ?"x" + Coord to; // formula
-// 4. Type from + Coord from + "?"x + Coord to; // formula
 
 const pawnSANFormula = (move) => (
     IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]);
@@ -55,22 +21,22 @@ const pieceSANFormulas = [
     (move) => (
         ISanType[move.from & Type.ON]
         + ((move.to & Captured.ON) === Captured.True ? "x" : "")
-        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON]),
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]),
     (move) => (
         ISanType[move.from & Type.ON]
         + IYCoord[move.from & YCoord.ON]
         + ((move.to & Captured.ON) === Captured.True ? "x" : "")
-        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON]),
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]),
     (move) => (
         ISanType[move.from & Type.ON]
         + IXCoord[move.from & XCoord.ON]
         + ((move.to & Captured.ON) === Captured.True ? "x" : "")
-        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON]),
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]),
     (move) => (
         ISanType[move.from & Type.ON]
         + IXCoord[move.from & XCoord.ON] + IYCoord[move.from & YCoord.ON]
         + ((move.to & Captured.ON) === Captured.True ? "x" : "")
-        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & IYCoord.ON])
+        + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON])
 ];
 
 const recurseMarkSan = (sanLibrary, formulas, formulaIndex, moves, moveIndex) =>
@@ -85,8 +51,9 @@ const recurseMarkSan = (sanLibrary, formulas, formulaIndex, moves, moveIndex) =>
 
         sanLibrary[san].push(moveIndex)
 
+        const plus1 = formulaIndex + 1;
         for (let collidedMoveIndex in sanLibrary[san])
-            recurseMarkSan(sanLibrary, formulas, formulaIndex++, moves, collidedMoveIndex);
+            recurseMarkSan(sanLibrary, formulas, plus1, moves, collidedMoveIndex);
     }
     else
     {
@@ -94,11 +61,11 @@ const recurseMarkSan = (sanLibrary, formulas, formulaIndex, moves, moveIndex) =>
     }
 }
 
-export const sanLibrary = (moves) =>
+export const injectSan = (moves) =>
 {
     const sanLibrary = {};
 
-    for (let index in moves)
+    for (let index = 0; index < moves.length; index++)
     {
         const move = moves[index];
 
@@ -116,8 +83,11 @@ export const sanLibrary = (moves) =>
         }
     }
 
+    const iSanLibrary = invert(sanLibrary);
 
-    return sanLibrary;
+    moves.forEach((move, index) => move.san = iSanLibrary[index]);
+    
+    return moves;
 }
 
 export const parseMovefromSAN = (san) =>

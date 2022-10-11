@@ -2,10 +2,9 @@ import readline from 'readline';
 
 import { PAWN_PIECES, STANDARD_PIECES } from './helpers.js';
 import { findMoves } from './evaluate.js';
-import { argv, debugPort } from 'process';
 import { debugBoard, debugMove, debugPiece } from './debug.js';
-import { createSanTree } from './san.js';
-import { debuglog } from 'util';
+import { findSan } from './san.js';
+import { SanType } from './constants.js';
 
 const modes = {
     standard: STANDARD_PIECES,
@@ -29,41 +28,31 @@ const script = {
     move: "What will be white's move?"
 }
 
-let game = null;
+const createNewGame = () =>
+{
+    const game = {
+        turn: 0,
+        pieces: STANDARD_PIECES
+    };
 
-const gameCommands = {
-    turn: () =>
+    const promptSan = (san) => 
     {
-
-    },
-    suggestMove: (san) =>
-    {
-        const move = parseMovefromSAN(san);
-
-        const match = findMoveMatch(move, moves);
+        const result = moves.find((move) => move.san === san);
+        console.log(result);
     }
+
+    const moves = injectSan(findMoves(game.pieces));
 }
 
 /*
-const playGame = ({ mode="pawns" }) =>
+const getMoveInput = () =>
 {
-    if (!modes.hasOwnProperty(mode)) return 
-        rl.question(compose(script.modeNotFound(mode), script.menu), menu);
-
-    const game = {
-        turn: 0,
-        pieces: modes[mode]
-    };
-
-    const getMoveInput = () =>
-    {
-        const sanTree = createSanTree(findMoves(game.pieces));
-        const currentTurn = Index.active()
-       .log(debugBoard(pieces));
+        const moves = findMoves(game.pieces);
+        const san = findSan(moves);
         
         const promptMove = (san) =>
         {
-            if (san in sanTree)
+            if (san)
             {
                 game.pieces = sanTree[san].nextPieces;
                 getMoveInput();
@@ -78,25 +67,14 @@ const playGame = ({ mode="pawns" }) =>
 
         getMoveInput();
     }
+    
+    getMoveInput();
 }
+
 */
 
-
 const menuCommands = {
-    new: (mode="pawns") =>
-    {
-        if (modes.hasOwnProperty(mode))
-        {
-            let game = {
-                turn: 0,
-                pieces: modes[mode],
-            };
-        }
-        else
-        {
-            rl.question(compose(script.modeNotFound(mode), script.menu), menu);
-        }
-    },
+    new: createNewGame,
     quit: () =>
     {
         rl.close();
