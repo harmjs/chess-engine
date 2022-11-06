@@ -1,15 +1,9 @@
-import readline from 'readline';
-
 import { PAWN_PIECES, STANDARD_PIECES } from './helpers.js';
-import { findMoves } from './evaluate.js';
+import { getMoves } from './evaluate.js';
+import { getSanMoves} from './san.js';
 import { debugBoard, debugMove, debugPiece } from './debug.js';
-import { findSan } from './san.js';
 import { SanType } from './constants.js';
-
-const modes = {
-    standard: STANDARD_PIECES,
-    pawns: PAWN_PIECES,
-};
+import readline from 'readline/promises';
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -28,6 +22,29 @@ const script = {
     move: "What will be white's move?"
 }
 
+
+// callback hell CLI is swamping my style
+// promises aren't experiemental, we async/await syntax now,
+// polish at this stage is a mistake
+// this is a testing / bugcatching platform
+
+export const start = async () =>
+{
+    let pieces = STANDARD_PIECES;
+
+    while(true)
+    {
+        const sanMoves = getSanMoves(getMoves(pieces));
+        console.log(debugBoard(pieces), Object.keys(sanMoves));
+
+        const san = await rl.question(compose(script.move));
+
+        if (san in sanMoves)
+            pieces = sanMoves[san].nextPieces;
+    }
+}
+
+/*
 const createNewGame = () =>
 {
     const game = {
@@ -71,7 +88,6 @@ const getMoveInput = () =>
     getMoveInput();
 }
 
-*/
 
 const menuCommands = {
     new: createNewGame,
@@ -104,3 +120,5 @@ export const start = () =>
 {
     rl.question(compose(script.welcome, script.menu), menu);
 }
+
+*/

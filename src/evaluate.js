@@ -20,7 +20,7 @@ const modifyPieces = (pieces, replacePiece, replaceIndex, removeIndex=null) =>
     return nextPieces;
 }
 
-const findPawnMoves = (from, indexMap, coordMap, moves, pieces) =>
+const getPawnMoves = (from, indexMap, coordMap, moves, pieces) =>
 {
     const index = indexMap.get(from);
     if ((from & Active.ON) === Active.TRUE)
@@ -91,7 +91,7 @@ const findPawnMoves = (from, indexMap, coordMap, moves, pieces) =>
     }
 }
 
-const createFindMovesInLineDirections = (lineDirections) => ((from, indexMap, coordMap, moves, pieces) => 
+const createGetMovesInLineDirections = (lineDirections) => ((from, indexMap, coordMap, moves, pieces) => 
 {
     const index = indexMap.get(from);
     for (let lineDirection of lineDirections)
@@ -132,7 +132,7 @@ const createFindMovesInLineDirections = (lineDirections) => ((from, indexMap, co
 });
 
 
-const createFindMovesInDirections = (directions) => ((from, indexMap, coordMap, moves, pieces) =>
+const createGetMovesInDirections = (directions) => ((from, indexMap, coordMap, moves, pieces) =>
 {
     const index = indexMap.get(from);
     for (let direction of directions)
@@ -162,16 +162,16 @@ const createFindMovesInDirections = (directions) => ((from, indexMap, coordMap, 
     }
 });
 
-const findMovesByType =  new Map([
-    [Type.PAWN, findPawnMoves],
-    [Type.KNIGHT, createFindMovesInDirections(KNIGHT_DIRECTIONS)],
-    [Type.BISHOP, createFindMovesInLineDirections(INTERCARDINAL_DIRECTIONS)],
-    [Type.ROOK, createFindMovesInLineDirections(CARDINAL_DIRECTIONS)],
-    [Type.QUEEN, createFindMovesInLineDirections(DIRECTIONS)],
-    [Type.KING, createFindMovesInDirections(DIRECTIONS)]
+const getMovesByTypeMap =  new Map([
+    [Type.PAWN, getPawnMoves],
+    [Type.KNIGHT, createGetMovesInDirections(KNIGHT_DIRECTIONS)],
+    [Type.BISHOP, createGetMovesInLineDirections(INTERCARDINAL_DIRECTIONS)],
+    [Type.ROOK, createGetMovesInLineDirections(CARDINAL_DIRECTIONS)],
+    [Type.QUEEN, createGetMovesInLineDirections(DIRECTIONS)],
+    [Type.KING, createGetMovesInDirections(DIRECTIONS)]
 ]);
 
-export const findMoves = (pieces) =>
+export const getMoves = (pieces) =>
 {
     const moves = [];
 
@@ -183,7 +183,7 @@ export const findMoves = (pieces) =>
     const activePieces = pieces.filter((piece) => 
         ((piece & Active.ON) === Active.TRUE));
 
-    for (let from of activePieces) findMovesByType.get(from & Type.ON)
+    for (let from of activePieces) getMovesByTypeMap.get(from & Type.ON)
         (from, indexMap, coordMap, moves, pieces);
 
     return moves;

@@ -20,50 +20,50 @@ const pawnCaptureSanFormulas = [
 const pieceSANFormulas = [
     (move) => (
         ISanType[move.from & Type.ON]
-        + ((move.to & Captured.ON) === Captured.True ? "x" : "")
+        + ((move.to & Captured.ON) === Captured.TRUE ? "x" : "")
         + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]),
     (move) => (
         ISanType[move.from & Type.ON]
         + IYCoord[move.from & YCoord.ON]
-        + ((move.to & Captured.ON) === Captured.True ? "x" : "")
+        + ((move.to & Captured.ON) === Captured.TRUE ? "x" : "")
         + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]),
     (move) => (
         ISanType[move.from & Type.ON]
         + IXCoord[move.from & XCoord.ON]
-        + ((move.to & Captured.ON) === Captured.True ? "x" : "")
+        + ((move.to & Captured.ON) === Captured.TRUE ? "x" : "")
         + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON]),
     (move) => (
         ISanType[move.from & Type.ON]
         + IXCoord[move.from & XCoord.ON] + IYCoord[move.from & YCoord.ON]
-        + ((move.to & Captured.ON) === Captured.True ? "x" : "")
+        + ((move.to & Captured.ON) === Captured.TRUE ? "x" : "")
         + IXCoord[move.to & XCoord.ON] + IYCoord[move.to & YCoord.ON])
 ];
 
-const recurseMarkSan = (sanLibrary, formulas, formulaIndex, moves, moveIndex) =>
+const recurseMarkSan = (sanIndex, formulas, formulaIndex, moves, moveIndex) =>
 {
     const formula = formulas[formulaIndex];
     const san = formula(moves[moveIndex]);
 
-    if (san in sanLibrary)
+    if (san in sanIndex)
     {
-        if (!Array.isArray(sanLibrary[san]))
-            sanLibrary[san] = [sanLibrary[san]];
+        if (!Array.isArray(sanIndex[san]))
+            sanIndex[san] = [sanIndex[san]];
 
-        sanLibrary[san].push(moveIndex)
+            sanIndex[san].push(moveIndex)
 
         const plus1 = formulaIndex + 1;
-        for (let collidedMoveIndex in sanLibrary[san])
-            recurseMarkSan(sanLibrary, formulas, plus1, moves, collidedMoveIndex);
+        for (let collidedMoveIndex in sanIndex[san])
+            recurseMarkSan(sanIndex, formulas, plus1, moves, collidedMoveIndex);
     }
     else
     {
-        sanLibrary[san] = moveIndex;
+        sanIndex[san] = moveIndex;
     }
 }
 
-export const injectSan = (moves) =>
+export const getSanMoves = (moves) =>
 {
-    const sanLibrary = {};
+    const sanIndex = {};
 
     for (let index = 0; index < moves.length; index++)
     {
@@ -71,23 +71,24 @@ export const injectSan = (moves) =>
 
         if ((move.from & Type.ON) !== Type.PAWN)
         {
-            recurseMarkSan(sanLibrary, pieceSANFormulas, 0, moves, index);
+            recurseMarkSan(sanIndex, pieceSANFormulas, 0, moves, index);
         }
         else if ((move.to & Captured.ON) === Captured.FALSE)
         {
-            sanLibrary[pawnSANFormula(move)] = parseInt(index);
+            sanIndex[pawnSANFormula(move)] = parseInt(index);
         }
         else
         {
-            recurseMarkSan(sanLibrary, pawnCaptureSanFormulas, 0, moves, index)
+            recurseMarkSan(sanIndex, pawnCaptureSanFormulas, 0, moves, index)
         }
     }
 
-    const iSanLibrary = invert(sanLibrary);
-
-    moves.forEach((move, index) => move.san = iSanLibrary[index]);
-    
-    return moves;
+    return Object.entries(sanIndex)
+        .reduce((sanMoves, [san, index]) =>
+        {
+            sanMoves[san] = moves[index];
+            return sanMoves;
+        }, {})
 }
 
 export const parseMovefromSAN = (san) =>
@@ -192,13 +193,3 @@ export const findMoveInMoves = (targetMove, candidateMoves) =>
         return result;
     }, { scoreToBeat: -1, moves: null });
 }
-
-
-
-const parseTree = {
-
-}
-
-/*
-
-*/
