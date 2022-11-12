@@ -10,7 +10,7 @@ export const TYPE_NAMES = [
 
 export const X_COORD_NAMES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 export const Y_COORD_NAMES = ["1", "2", "3", "4", "5", "6", "7", "8"];
-  
+
 /*
  * Piece encoding into uint16:
  *   1 bit tracking whether piece has moved (only used for king, pawns, rooks)
@@ -19,7 +19,7 @@ export const Y_COORD_NAMES = ["1", "2", "3", "4", "5", "6", "7", "8"];
  *   3 bits for type of piece
  *   4 bits for x position - (00xx or 11xx bits are out of bounds)
  *   4 bits for y poisition - (00xx or 11xx bits are out of bounds)
- *   1 bit for tracking if a peice has been captured
+ *   1 bit for tracking if a piece has been captured
  *   1 bit unused
  */
 
@@ -79,11 +79,10 @@ XCoord.RANGE_OFF = toggleUint16(XCoord.RANGE_ON);
 YCoord.RANGE_ON = 2 ** 12 + 2 ** 13;
 YCoord.RANGE_OFF = toggleUint16(YCoord.RANGE_ON);
 
-
 export const Coord = { 
     ON: XCoord.ON + YCoord.ON, 
     OFF: toggleUint16(XCoord.ON + YCoord.ON),
-    NULL: XCoord.NULL + YCoord.NULL
+    NULL: XCoord.NULL + YCoord.NULL,
 };
 
 Coord.RANGE_ON = XCoord.RANGE_ON + YCoord.RANGE_ON;
